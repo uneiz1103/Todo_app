@@ -8,9 +8,15 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
-      backgroundColor: Colors.lightBlueAccent,
-      body: const Text('This is HomePage!!'),
+      appBar: AppBar(
+        title: const Text('Todo_App'),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {},
+      ),
+      body: const Column(
+        children: [],
+      ),
     );
   }
 }

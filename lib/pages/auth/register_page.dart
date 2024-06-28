@@ -81,7 +81,7 @@ class _Body extends HookWidget {
         OverflowBar(
           children: [
             TextButton(
-              onPressed: () async   {
+              onPressed: () async {
                 final didPop = await router.maybePop();
                 if (didPop) return;
                 router.popAndPush(const LoginRoute());
