@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:luthor/luthor.dart';
+import 'package:todo_app/common/data_state.dart';
+import 'package:todo_app/config/router.dart';
 import 'package:todo_app/config/router.gr.dart';
 import 'package:todo_app/pages/auth/forms/auth_form.dart';
+import 'package:todo_app/state/auth_cubit.dart';
 import 'package:todo_app/widgets/unfocus.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 @RoutePage()
 class RegisterPage extends StatelessWidget {
@@ -30,9 +33,13 @@ class RegisterPage extends StatelessWidget {
 
 class _Body extends HookWidget {
   const _Body();
-
+  @override
   Widget build(BuildContext context) {
     final hidePassword = useState(true);
+
+    final isLoading = context.select(
+      (AuthCubit c) => c.state.registerState is DataStateLoading,
+    );
 
     return ListView(
       shrinkWrap: true,
@@ -69,23 +76,45 @@ class _Body extends HookWidget {
           textInputAction: TextInputAction.done,
           obscureText: hidePassword.value,
           onChanged: (value) => context.read<AuthForm>().changePassword(value),
+          onFieldSubmitted: (_) => _register(context),
         ),
         OverflowBar(
           children: [
             TextButton(
-              onPressed: () {
-                AutoRouter.of(context).push(const LoginRoute());
+              onPressed: () async   {
+                final didPop = await router.maybePop();
+                if (didPop) return;
+                router.popAndPush(const LoginRoute());
               },
               child: const Text('Already have an account? Login'),
             ),
             const SizedBox(width: 23),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: isLoading ? null : () => _register(context),
               child: const Text('Register'),
             ),
           ],
         ),
       ],
     );
+  }
+
+  Future<void> _register(BuildContext context) async {
+    final validationResult = context.read<AuthForm>().validate();
+    if (validationResult is! SchemaValidationSuccess) return;
+
+    final body = validationResult.data!;
+    final registerResult = await context.read<AuthCubit>().register(body);
+    if (!context.mounted) return;
+    switch (registerResult) {
+      case DataStateSuccess():
+        router.pushAndPopUntil(const HomeRoute(), predicate: (_) => false);
+      case DataStateFailure(failure: final f):
+        ScaffoldMessenger.of(context)
+          ..removeCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(f.messageOrDefault)));
+      case _:
+        break;
+    }
   }
 }
