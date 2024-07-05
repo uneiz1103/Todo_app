@@ -111,7 +111,6 @@ class _Body extends HookWidget {
     if (!context.mounted) return;
     switch (loginResult) {
       case DataStateSuccess():
-        print('unnn');
         router.pushAndPopUntil(const HomeRoute(), predicate: (_) => false);
       case DataStateFailure(failure: final f):
         ScaffoldMessenger.of(context)
